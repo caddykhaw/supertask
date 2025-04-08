@@ -10,10 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:setup-boss": "ts-node --project scripts/tsconfig.json scripts/setup-boss.ts",
-    "db:migrate-turso": "ts-node --project scripts/tsconfig.json scripts/migrate-to-turso.ts",
-    "db:setup-boss-turso": "ts-node --project scripts/tsconfig.json scripts/setup-boss-turso.ts",
-    "db:migrate-data-to-turso": "ts-node --project scripts/tsconfig.json scripts/migrate-data-to-turso.ts"
+    "db:setup-boss-turso": "ts-node --project scripts/tsconfig.json scripts/setup-boss-turso.ts"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",
@@ -32,7 +29,6 @@
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
     "bcrypt": "^5.1.1",
-    "better-sqlite3": "^8.7.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "dotenv": "^16.4.7",
@@ -51,7 +47,6 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^20.10.4",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
