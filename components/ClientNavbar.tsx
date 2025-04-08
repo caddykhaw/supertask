@@ -29,7 +29,9 @@ export default function ClientNavbar({ user }: { user: User | null }) {
   }
   
   const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: '/login' });
+    await signOut({ redirect: false });
+    // Force a hard navigation to login page
+    window.location.href = '/login';
   };
 
   const NavigationLinks = () => (

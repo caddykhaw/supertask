@@ -8,6 +8,12 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     console.log("Middleware processing path:", pathname);
     
+    // Special handling for signout - don't redirect if coming from signout
+    if (request.cookies.has('next-auth.session-token') === false && pathname === '/login') {
+      // This is likely a sign-out redirect, let it proceed
+      return NextResponse.next();
+    }
+    
     const token = await getToken({ 
       req: request, 
       secret: process.env.NEXTAUTH_SECRET 

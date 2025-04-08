@@ -20,22 +20,21 @@ export default function SignOutButton({ children, className }: SignOutButtonProp
     try {
       toast.loading('Signing out...');
       
-      // Sign out with NextAuth and redirect to login page
+      // Sign out with NextAuth - explicitly set redirect to false to handle it manually
       await signOut({ 
-        redirect: true,
-        callbackUrl: '/login'
+        redirect: false
       });
       
-      // Note: The code below will only run if redirect: false was set
-      // or if there was an issue with the redirect
       toast.success('Successfully signed out');
-      router.replace('/login');
+      
+      // Manually force a hard navigation to login page
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error during sign out:', error);
       toast.error('Failed to sign out completely');
       
-      // Attempt to redirect anyway
-      router.replace('/login');
+      // Force navigation to login page even if there's an error
+      window.location.href = '/login';
     }
   };
 
