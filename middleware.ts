@@ -41,21 +41,24 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     
-    // If user is logged in and trying to access login page, redirect to dashboard
+    // If user is logged in and trying to access login page, redirect to home
     if (token && isPublicPath && !pathname.startsWith("/api")) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
     
     // Admin paths that require BOSS role
     const adminPaths = ["/admin", "/users"];
     const isAdminPath = adminPaths.some(path => pathname.startsWith(path));
     
-    // If user doesn't have BOSS role and tries to access admin path, redirect to dashboard
+    // If user doesn't have BOSS role and tries to access admin path, redirect to home
     if (token?.role !== UserRole.BOSS && isAdminPath) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
     
-    return NextResponse.next();
+    // Add the current path as a header
+    const response = NextResponse.next();
+    response.headers.set('x-pathname', pathname);
+    return response;
   } catch (error) {
     console.error("Middleware error:", error);
     // In case of error, allow the request to proceed

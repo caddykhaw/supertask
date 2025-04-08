@@ -6,6 +6,15 @@ import { compare } from "bcrypt";
 const testPassword = "Iamtheboss123";
 const email = "bsytan_2000@gmail.com";
 
+// Define type for the user result
+interface UserRecord {
+  id: string;
+  name: string;
+  email: string;
+  password_hash: string;
+  role: string;
+}
+
 async function verifyPassword() {
   try {
     // Open database
@@ -14,7 +23,7 @@ async function verifyPassword() {
     const db = new Database(dbPath);
     
     // Get user by email
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRecord;
     
     if (!user) {
       console.log(`User not found with email: ${email}`);

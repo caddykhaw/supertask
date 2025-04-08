@@ -21,7 +21,7 @@ SuperTask is a task management application with role-based access control.
 
 - **Frontend**: Next.js 15.2.4, Tailwind CSS 4, shadcn/ui
 - **Backend**: Next.js App Router (RSC), API Routes
-- **Database**: SQLite with Drizzle ORM
+- **Database**: SQLite/Turso with Drizzle ORM
 - **Authentication**: NextAuth.js
 
 ## Getting Started
@@ -55,6 +55,29 @@ SuperTask is a task management application with role-based access control.
    ```
 
 5. Visit http://localhost:3000 in your browser
+
+### Using Turso (Production/Cloud)
+
+You can optionally use Turso for a cloud SQLite database:
+
+1. Install the Turso CLI and create a database
+   ```bash
+   curl -sSfL https://get.tur.so/install.sh | bash
+   turso auth login
+   turso db create supertask
+   ```
+
+2. Update your `.env` file with credentials
+   ```bash
+   turso db show supertask
+   turso db tokens create supertask
+   ```
+
+3. Migrate schemas and data
+   ```bash
+   npm run db:migrate-turso
+   npm run db:setup-boss-turso
+   ```
 
 ### Demo Account
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task } from "@/lib/task-utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
+import { useTasks } from "@/hooks/useTasks";
 
 // Client-side actions
 async function toggleTaskCompletionClient(taskId: string, completed: boolean) {
@@ -116,9 +117,12 @@ function TaskItem({ task, canEdit, onToggleComplete }: TaskItemProps) {
             <p className="text-sm text-muted-foreground">{task.description}</p>
           )}
           
-          <p className="text-xs text-muted-foreground">
-            Added by {task.userName}
-          </p>
+          <div className="flex gap-2 text-xs text-muted-foreground">
+            <span>By {task.userName || "Unknown"}</span>
+            {task.dueDate && (
+              <span>• Due: {new Date(task.dueDate).toLocaleDateString('en-GB')}</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -134,6 +138,12 @@ interface TaskListProps {
 export default function TaskList({ tasks, date, canEditAll }: TaskListProps) {
   const { session } = useAuth();
   const [taskItems, setTaskItems] = useState(tasks);
+  const { refreshTasks } = useTasks();
+  
+  // Update local state when props change
+  useEffect(() => {
+    setTaskItems(tasks);
+  }, [tasks]);
   
   // Check if user can edit a specific task
   const canEdit = (task: Task) => {
@@ -159,6 +169,9 @@ export default function TaskList({ tasks, date, canEditAll }: TaskListProps) {
         setTaskItems(taskItems.map(task => 
           task.id === taskId ? { ...task, completed } : task
         ));
+        
+        // Refresh tasks after updating
+        refreshTasks();
         
         toast.success(completed ? "Task completed" : "Task uncompleted");
       } else {
@@ -197,6 +210,9 @@ export default function TaskList({ tasks, date, canEditAll }: TaskListProps) {
       try {
         // Update the order value for the moved task
         await updateTaskOrderClient(movedItem.id, overIndex);
+        
+        // Refresh tasks after reordering
+        refreshTasks();
       } catch (error) {
         // Revert to original order if there's an error
         setTaskItems(tasks);

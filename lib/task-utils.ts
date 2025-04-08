@@ -63,40 +63,44 @@ export async function getTasks() {
     let taskList;
     
     if (userRole === UserRole.BOSS) {
-      taskList = await db.select({
-        id: tasks.id,
-        title: tasks.title,
-        description: tasks.description,
-        completed: tasks.completed,
-        dueDate: tasks.dueDate,
-        userId: tasks.userId,
-        userName: users.name,
-        createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
-        order: tasks.order,
-      })
-      .from(tasks)
-      .leftJoin(users, eq(tasks.userId, users.id));
+      taskList = await db.query.tasks.findMany({
+        with: { user: true },
+        columns: {
+          id: true,
+          title: true,
+          description: true,
+          completed: true,
+          dueDate: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          order: true
+        }
+      });
     } else {
       // For clerks: get their own tasks AND tasks created by users with boss role
-      taskList = await db.select({
-        id: tasks.id,
-        title: tasks.title,
-        description: tasks.description,
-        completed: tasks.completed,
-        dueDate: tasks.dueDate,
-        userId: tasks.userId,
-        userName: users.name,
-        createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
-        order: tasks.order,
-      })
-      .from(tasks)
-      .leftJoin(users, eq(tasks.userId, users.id))
-      .where(sql`${tasks.userId} = ${userId} OR ${users.role} = ${UserRole.BOSS}`);
+      taskList = await db.query.tasks.findMany({
+        with: { user: true },
+        columns: {
+          id: true,
+          title: true,
+          description: true,
+          completed: true,
+          dueDate: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          order: true
+        },
+        where: sql`${tasks.userId} = ${userId} OR ${users.role} = ${UserRole.BOSS}`
+      });
     }
     
-    return taskList;
+    // Map results to include user name
+    return taskList.map(task => ({
+      ...task,
+      userName: task.user?.name || null
+    }));
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return [];
@@ -110,18 +114,26 @@ export async function getTasksByDate() {
   // Group tasks by date
   const tasksByDate = taskList.reduce((acc, task) => {
     const date = task.dueDate 
-      ? new Date(task.dueDate).toLocaleDateString() 
+      ? formatDate(new Date(task.dueDate)) 
       : "No Due Date";
     
     if (!acc[date]) {
       acc[date] = [];
     }
     
-    acc[date].push(task as Task);
+    acc[date].push(task);
     return acc;
   }, {} as Record<string, Task[]>);
   
   return tasksByDate;
+}
+
+// Helper function to format date in dd/mm/yyyy format
+function formatDate(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 // Function to create a new task
@@ -137,15 +149,19 @@ export async function createTask(formData: FormData) {
   if (!title) throw new Error("Title is required");
   
   // Find highest order for current user's tasks to place new task at the end
-  const maxOrderResult = await db.select({
-    maxOrder: tasks.order,
-  })
-  .from(tasks)
-  .where(eq(tasks.userId, userId))
-  .orderBy(desc(tasks.order))
-  .limit(1);
-  
-  const maxOrder = maxOrderResult.length > 0 ? maxOrderResult[0].maxOrder + 1 : 0;
+  let maxOrder = 0;
+  try {
+    const tasksResult = await db.query.tasks.findMany({
+      where: eq(tasks.userId, userId),
+      orderBy: [desc(tasks.order)],
+      columns: { order: true },
+      limit: 1
+    });
+    
+    maxOrder = tasksResult.length > 0 ? tasksResult[0].order + 1 : 0;
+  } catch (error) {
+    console.error("Error finding max order:", error);
+  }
   
   try {
     const dueDate = dueDateStr ? new Date(dueDateStr) : null;
@@ -159,7 +175,7 @@ export async function createTask(formData: FormData) {
       order: maxOrder,
     });
     
-    revalidatePath("/dashboard");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Error creating task:", error);
@@ -187,23 +203,17 @@ export async function toggleTaskCompletion(taskId: string, completed: boolean) {
         .where(eq(tasks.id, taskId));
     } else {
       // Get the task to check if it was created by a boss
-      const taskToUpdate = await db.select({
-        userId: tasks.userId,
-        creatorRole: users.role,
-      })
-      .from(tasks)
-      .leftJoin(users, eq(tasks.userId, users.id))
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+      const taskWithUser = await db.query.tasks.findFirst({
+        with: { user: true },
+        where: eq(tasks.id, taskId)
+      });
       
-      if (taskToUpdate.length === 0) {
+      if (!taskWithUser) {
         throw new Error("Task not found");
       }
       
-      const task = taskToUpdate[0];
-      
       // Clerk can update if: it's their own task OR it was created by a boss
-      if (task.userId === userId || task.creatorRole === UserRole.BOSS) {
+      if (taskWithUser.userId === userId || taskWithUser.user?.role === UserRole.BOSS) {
         await db.update(tasks)
           .set({ 
             completed, 
@@ -215,7 +225,7 @@ export async function toggleTaskCompletion(taskId: string, completed: boolean) {
       }
     }
     
-    revalidatePath("/dashboard");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Error updating task:", error);
@@ -250,7 +260,7 @@ export async function updateTaskOrder(taskId: string, newOrder: number) {
         .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
     }
     
-    revalidatePath("/dashboard");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Error updating task order:", error);

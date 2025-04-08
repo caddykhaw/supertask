@@ -13,7 +13,7 @@ export default async function UsersPage() {
   
   // Make sure only Boss can access this page
   if (session?.user?.role !== UserRole.BOSS) {
-    redirect("/dashboard");
+    redirect("/");
   }
   
   const users: User[] = await getUsers();
@@ -25,7 +25,7 @@ export default async function UsersPage() {
   }
   
   return (
-    <div className="container py-8">
+    <div className="w-2/3 mx-auto container py-8">
       <h1 className="text-3xl font-bold mb-8">User Management</h1>
       
       <div className="grid gap-8 md:grid-cols-2">

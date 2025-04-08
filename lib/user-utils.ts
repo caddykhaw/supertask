@@ -33,15 +33,16 @@ export async function getUsers() {
   }
   
   try {
-    const userList = await db.select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      role: users.role,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(users.createdAt);
+    const userList = await db.query.users.findMany({
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      },
+      orderBy: [users.createdAt]
+    });
     
     return userList;
   } catch (error) {

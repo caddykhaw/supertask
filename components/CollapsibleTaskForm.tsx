@@ -9,6 +9,11 @@ import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 export default function CollapsibleTaskForm() {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
+  const handleTaskSuccess = () => {
+    // Collapse the form after successful task creation
+    setIsFormVisible(false);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
@@ -44,7 +49,7 @@ export default function CollapsibleTaskForm() {
         </div>
       )}
       <CardContent className={isFormVisible ? "block p-4" : "hidden"}>
-        <CreateTaskForm />
+        <CreateTaskForm onSuccess={handleTaskSuccess} />
       </CardContent>
     </Card>
   );

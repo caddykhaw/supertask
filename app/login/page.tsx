@@ -35,14 +35,14 @@ export default function LoginPage() {
         email: email,
         password: password,
         redirect: false,
-        callbackUrl: "/dashboard",
+        callbackUrl: "/",
       });
       
       console.log("Login result:", result);
       
       if (result?.ok) {
         toast.success("Login successful!");
-        router.push("/dashboard");
+        router.push("/");
         router.refresh();
       } else {
         console.error("Login failed:", result?.error);
@@ -72,7 +72,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">SuperTask</CardTitle>
+          <CardTitle className="text-2xl font-bold">要做什么...</CardTitle>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>
@@ -91,9 +91,6 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
-              <p className="text-xs text-muted-foreground">
-                For demo: Boss - bsytan_2000@gmail.com / Iamtheboss123
-              </p>
             </div>
           </CardContent>
           <CardFooter>

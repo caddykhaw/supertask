@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useTasks } from "@/hooks/useTasks";
 
 // Client-side action
 async function createTaskClient(formData: FormData) {
@@ -23,8 +24,13 @@ async function createTaskClient(formData: FormData) {
   }
 }
 
-export default function CreateTaskForm() {
+interface CreateTaskFormProps {
+  onSuccess?: () => void;
+}
+
+export default function CreateTaskForm({ onSuccess }: CreateTaskFormProps) {
   const [isCreating, setIsCreating] = useState(false);
+  const { refreshTasks } = useTasks();
   
   async function handleSubmit(formData: FormData) {
     setIsCreating(true);
@@ -83,6 +89,14 @@ export default function CreateTaskForm() {
         // Reset form
         const form = document.getElementById("create-task-form") as HTMLFormElement;
         if (form) form.reset();
+        
+        // Refresh tasks to update UI
+        refreshTasks();
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         toast.error("Failed to create tasks");
       }
