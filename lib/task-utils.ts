@@ -92,8 +92,38 @@ export async function getTasks() {
           updatedAt: true,
           order: true
         },
-        where: sql`${tasks.userId} = ${userId} OR ${users.role} = ${UserRole.BOSS}`
+        where: eq(tasks.userId, userId)
       });
+      
+      // Then separately fetch tasks created by boss users
+      const bossUserIds = await db.select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, UserRole.BOSS));
+      
+      const bossIds = bossUserIds.map(u => u.id);
+      
+      // If boss IDs exist, fetch their tasks
+      let bossTasks: any[] = [];
+      if (bossIds.length > 0) {
+        bossTasks = await db.query.tasks.findMany({
+          with: { user: true },
+          columns: {
+            id: true,
+            title: true,
+            description: true,
+            completed: true,
+            dueDate: true,
+            userId: true,
+            createdAt: true,
+            updatedAt: true,
+            order: true
+          },
+          where: sql`${tasks.userId} IN (${sql.join(bossIds.map(id => sql`${id}`), sql`, `)})`
+        });
+      }
+      
+      // Combine clerk tasks with boss tasks
+      taskList = [...taskList, ...bossTasks];
     }
     
     // Map results to include user name
